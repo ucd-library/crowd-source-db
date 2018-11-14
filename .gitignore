@@ -1,0 +1,18 @@
+# Node Stuff
+node_modules
+.env
+firebase-sync/config.json
+firebase-sync/config-dev.json
+firebase-sync/node_modules
+wine-price-api-dev/.env
+
+# Emacs stuff
+*~
+\#*\#
+.\#*
+
+# Ignore postgres saves / restores.
+Fc/*.Fc
+
+# Examples
+example/*.pdf

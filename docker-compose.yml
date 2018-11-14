@@ -1,0 +1,20 @@
+version: '2'
+
+volumes:
+  pg-data:
+
+services:
+  postgres:
+    build: ./postgres
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+  pgr:
+    build: ./pgr
+    ports:
+      - "3000:3000"
+    environment:
+      - PGR_JWT_SECRET=${PGR_JWT_SECRET}
+      - PGR_ANON=${PGR_ANON}
+    depends_on:
+      - postgres

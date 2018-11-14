@@ -24,9 +24,12 @@ CREATE TABLE items (
     completed boolean default false,
     index integer
 );
+create index on items(collection_id);
+create index on items(parent_id);
+create index on items(index);
 
 CREATE TABLE crowd_inputs (
-   mark_id uuid primary key,
+   crowd_input_id uuid primary key default public.gen_random_uuid(),
    user_id text,
    item_id text REFERENCES items not null,
    anonymous boolean,
@@ -36,7 +39,12 @@ CREATE TABLE crowd_inputs (
 );
 create index on crowd_inputs(user_id);
 
-CREATE FUNCTION marks(items) RETURNS bigint AS $$
+CREATE TABLE users (
+    user_id text primary key,
+    score integer
+);
+
+CREATE FUNCTION crowd_inputs(items) RETURNS bigint AS $$
   SELECT count(*) from crowd_source.crowd_inputs where item_id=$1.item_id;
 $$ LANGUAGE SQL IMMUTABLE;
 

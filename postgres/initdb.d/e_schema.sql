@@ -48,21 +48,38 @@ CREATE FUNCTION crowd_inputs(items) RETURNS bigint AS $$
   SELECT count(*) from crowd_source.crowd_inputs where item_id=$1.item_id;
 $$ LANGUAGE SQL IMMUTABLE;
 
+
+-- CREATE OR REPLACE VIEW item_count AS 
+--     SELECT 
+--         count(*) as total,
+--         sum(case when (p.editable is false or p.completed is true) then 1 else 0 end) as finished,
+--         sum(case when (p.editable is true and p.completed is false) then 1 else 0 end) as not_finished
+--     FROM 
+--         items p
+
+CREATE FUNCTION child_item_count(item_id text) 
+    RETURNS TABLE (
+        total bigint,
+        finished bigint,
+        not_finished bigint
+    )  
+    AS $$
+    BEGIN
+    RETURN QUERY SELECT 
+        count(*) as total,
+        sum(case when (p.editable is false or p.completed is true) then 1 else 0 end) as finished,
+        sum(case when (p.editable is true and p.completed is false) then 1 else 0 end) as not_finished
+    FROM 
+        items p
+    WHERE parent_id=$1;
+    END;
+$$ LANGUAGE 'plpgsql';
+
 -- create type item_count as (
 --   total bigint,
 --   finished bigint,
 --   not_finished bigint
 -- );
-
--- CREATE FUNCTION child_item_count(item) RETURNS item_count AS $$
---    SELECT (
---     count(*),
---     sum(case when (p.editable is false or p.completed is true) then 1 else 0 end),
---     sum(case when (p.editable is true and p.completed is false) then 1 else 0 end)
---    )::item_count 
---    from items p
---    where parent_id=$1.item_id
--- $$ LANGUAGE SQL IMMUTABLE;
 
 
 -- CREATE FUNCTION child_items(catalogs) RETURNS bigint AS $$

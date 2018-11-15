@@ -3,9 +3,10 @@
 dc:=docker-compose
 db:=postgres
 pg:=${dc} exec --user postgres postgres
-date:=$(shell date --iso)
-dump-items.Fc:=/app/Fc/items_${date}.Fc
-dump-crowd-inputs.Fc:=/app/Fc/crowd_inputs_${date}.Fc
+# date:=$(shell date --iso)
+date:=$(shell date "+%Y-%m-%d")
+dump-items.Fc:=/io/items_${date}.Fc
+dump-crowd-inputs.Fc:=/io/crowd_inputs_${date}.Fc
 
 dump-items:
 	${pg} pg_dump -Fc --file=${dump-items.Fc} -a \

@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 volumes:
   pg-data:
@@ -12,10 +12,15 @@ services:
 
   pgr:
     build: ./pgr
-    ports:
-      - "3000:3000"
     environment:
       - PGR_JWT_SECRET=${PGR_JWT_SECRET}
       - PGR_ANON=${PGR_ANON}
     depends_on:
       - postgres
+
+  proxy:
+    build: ./schema-proxy
+    volumes:
+      - ./schemas:/proxy/schemas
+    ports:
+      - "3000:3000"

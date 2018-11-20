@@ -18,18 +18,19 @@ grant usage on schema crowd_source to anon;
 GRANT SELECT ON ALL TABLES IN SCHEMA crowd_source TO anon;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA crowd_source TO anon;
 
-GRANT INSERT on crowd_source.crowd_inputs to editor;
-GRANT UPDATE on crowd_source.crowd_inputs to editor;
-
 -- admins
 GRANT INSERT on crowd_source.collections to admin;
 GRANT UPDATE on crowd_source.collections to admin;
+GRANT DELETE on crowd_source.collections to admin;
 GRANT INSERT on crowd_source.items to admin;
 GRANT UPDATE on crowd_source.items to admin;
+GRANT DELETE on crowd_source.items to admin;
+GRANT INSERT on crowd_source.crowd_inputs to admin;
+GRANT UPDATE on crowd_source.crowd_inputs to admin;
+GRANT DELETE on crowd_source.crowd_inputs to admin;
 
--- Admin can't delete pages, etc.
+-- editor
 GRANT INSERT on crowd_source.crowd_inputs to editor;
 GRANT UPDATE on crowd_source.crowd_inputs to editor;
 GRANT DELETE on crowd_source.crowd_inputs to editor;
-
 GRANT UPDATE (editable,completed) on crowd_source.items to editor;

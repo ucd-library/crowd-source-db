@@ -18,7 +18,7 @@ CREATE TABLE collections (
 
 CREATE TABLE items (
     item_id text primary key,
-    collection_id text references collections,
+    collection_id text references collections not null,
     parent_id text references items,
     editable boolean default true,
     completed boolean default false,
@@ -38,6 +38,19 @@ CREATE TABLE crowd_inputs (
    updated timestamp without time zone
 );
 create index on crowd_inputs(user_id);
+
+CREATE TABLE suggest (
+   suggest_id uuid primary key default public.gen_random_uuid(),
+   collection_id text REFERENCES collections not null,
+   type text not null,
+   text text not null,
+   tsv tsvector
+);
+create unique index idx_suggest_unique on suggest(collectionId, type, text);
+
+CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
+ON suggest FOR EACH ROW EXECUTE PROCEDURE
+tsvector_update_trigger(tsv, 'pg_catalog.english', text);
 
 CREATE TABLE users (
     user_id text primary key,
@@ -74,6 +87,19 @@ CREATE FUNCTION child_item_count(item_id text)
     WHERE parent_id=$1;
     END;
 $$ LANGUAGE 'plpgsql';
+
+
+create type strto_tsquery_t as (
+    phrase text,
+    plain text 
+);
+
+create function strto_tsquery(str text) returns strto_tsquery_t as $$
+  select (
+   replace((phraseto_tsquery($1))::text,'''',''),
+   replace((plainto_tsquery($1))::text,'''','')
+   )::strto_tsquery_t;
+$$ LANGUAGE SQL IMMUTABLE;
 
 -- create type item_count as (
 --   total bigint,

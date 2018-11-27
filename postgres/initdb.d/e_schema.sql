@@ -16,20 +16,38 @@ CREATE TABLE collections (
     description text
 );
 
+CREATE TABLE applications (
+    app_id text primary key,
+    name text,
+    description text
+);
+
+CREATE TABLE allowed_schemas (
+    schema_id text not null,
+    app_id text references applications not null,
+    filename text not null,
+    PRIMARY KEY(schema_id, app_id)
+);
+
 CREATE TABLE items (
-    item_id text primary key,
+    item_id text not null,
+    app_id text references applications not null,
     collection_id text references collections not null,
     parent_id text references items,
     editable boolean default true,
     completed boolean default false,
-    index integer
+    index integer,
+    PRIMARY KEY(item_id, app_id)
 );
+create index on items(app_id);
 create index on items(collection_id);
 create index on items(parent_id);
 create index on items(index);
 
 CREATE TABLE crowd_inputs (
-   crowd_input_id uuid primary key default public.gen_random_uuid(),
+   crowd_input_id text primary key,
+   app_id text references applications not null,
+   collection_id text references collections not null,
    user_id text,
    item_id text REFERENCES items not null,
    anonymous boolean,
@@ -37,16 +55,21 @@ CREATE TABLE crowd_inputs (
    created timestamp without time zone,
    updated timestamp without time zone
 );
+create index on crowd_inputs(app_id);
+create index on crowd_inputs(collection_id);
+create index on crowd_inputs(item_id);
 create index on crowd_inputs(user_id);
 
 CREATE TABLE suggest (
    suggest_id uuid primary key default public.gen_random_uuid(),
    collection_id text REFERENCES collections not null,
-   type text not null,
+   app_id text references applications not null,
+   domain text not null,
    text text not null,
    tsv tsvector
 );
-create unique index idx_suggest_unique on suggest(collectionId, type, text);
+create index on suggest(domain);
+create unique index idx_suggest_unique on suggest(app_id, collection_id, domain, text);
 
 CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
 ON suggest FOR EACH ROW EXECUTE PROCEDURE

@@ -10,6 +10,6 @@ app.use(bodyParse.text({
 
 app.use((req, res) => proxy.middleware(req, res));
 
-app.listen(3000, () => {
-  console.log('schema proxy server ready on port 3000');
+app.listen(6080, () => {
+  console.log('schema proxy server ready on port 6080');
 });

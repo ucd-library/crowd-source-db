@@ -20,7 +20,5 @@ services:
 
   proxy:
     build: ./schema-proxy
-    volumes:
-      - ./schemas:/proxy/schemas
     ports:
-      - "3000:3000"
+      - "6080:6080"

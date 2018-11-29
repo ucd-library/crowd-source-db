@@ -13,7 +13,8 @@ alter database :DBNAME set search_path to crowd_source,public,pg_catalog;
 CREATE TABLE collections (
     collection_id text primary key,
     name text,
-    description text
+    description text,
+    host text
 );
 
 CREATE TABLE applications (
@@ -22,14 +23,15 @@ CREATE TABLE applications (
     description text
 );
 
-CREATE TABLE allowed_schemas (
+CREATE TABLE schemas (
     schema_id text not null,
     app_id text references applications not null,
-    filename text not null,
+    schema text not null,
     PRIMARY KEY(schema_id, app_id)
 );
 
 CREATE TABLE items (
+    app_item_id text primary key,
     item_id text not null,
     app_id text references applications not null,
     collection_id text references collections not null,
@@ -37,7 +39,7 @@ CREATE TABLE items (
     editable boolean default true,
     completed boolean default false,
     index integer,
-    PRIMARY KEY(item_id, app_id)
+    CONSTRAINT unq_app_item UNIQUE(item_id,app_id)
 );
 create index on items(app_id);
 create index on items(collection_id);

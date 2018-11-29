@@ -19,6 +19,9 @@ GRANT SELECT ON ALL TABLES IN SCHEMA crowd_source TO anon;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA crowd_source TO anon;
 
 -- admins
+GRANT INSERT on crowd_source.applications to admin;
+GRANT UPDATE on crowd_source.applications to admin;
+GRANT DELETE on crowd_source.applications to admin;
 GRANT INSERT on crowd_source.collections to admin;
 GRANT UPDATE on crowd_source.collections to admin;
 GRANT DELETE on crowd_source.collections to admin;
@@ -31,6 +34,9 @@ GRANT DELETE on crowd_source.crowd_inputs to admin;
 GRANT INSERT on crowd_source.suggest to admin;
 GRANT UPDATE on crowd_source.suggest to admin;
 GRANT DELETE on crowd_source.suggest to admin;
+GRANT INSERT on crowd_source.schemas to admin;
+GRANT UPDATE on crowd_source.schemas to admin;
+GRANT DELETE on crowd_source.schemas to admin;
 
 -- editor
 GRANT INSERT on crowd_source.crowd_inputs to editor;

@@ -20,5 +20,7 @@ services:
 
   proxy:
     build: ./schema-proxy
+    environment:
+      - CLOUD_FUNCTION_HOST=${CLOUD_FUNCTION_HOST}
     ports:
       - "6080:6080"

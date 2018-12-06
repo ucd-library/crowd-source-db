@@ -1,7 +1,13 @@
 const httpProxy = require('http-proxy');
 const parse = require('csv-parse/lib/sync')
-const schemaValidator = require('./schema');
+const request = require('request');
 const SchemaError = require('./SchemaError');
+
+const CLOUD_FUNCTION_HOST = process.env.CLOUD_FUNCTION_HOST;
+if( !CLOUD_FUNCTION_HOST ) {
+  console.error('environmental variable CLOUD_FUNCTION_HOST not set');
+  process.exit(-1);
+}
 
 const proxy = httpProxy.createProxyServer({
   ignorePath : true
@@ -37,7 +43,7 @@ class SchemaProxy {
       let body = this.getJsonBody(req);
       for( let item of body ) {
         if( !item.data ) continue;
-        this.validate(item.data);
+        this.validate(item);
 
         // a little manual validation
         if( table === 'crowd_inputs' ) {
@@ -103,30 +109,31 @@ class SchemaProxy {
 
   /**
    * @method validate
-   * @description given a mark
+   * @description given a crowdInput
    */
-  validate(data) {
-    if( typeof data === 'String' ) {
-      data = JSON.parse(data);
-    }
+  async validate(crowdInput) {
+    let response = await this.request(
+      `${CLOUD_FUNCTION_HOST}/api/crowd-input/validate`,
+      {
+        method : 'POST',
+        body : JSON.stringify(crowdInput),
+        headers : {
+          'content-type' : 'application/json'
+        }
+      }
+    );
 
-    if( !data['@schema'] ) {
-      throw new SchemaError('Data @schema not provided', data);
-    }
+    let body = JSON.parse(response.body);
+    if( body.error ) throw new SchemaError(body.message, crowdInput);
+  }
 
-    let schema = data['@schema'];
-    delete data['@schema'];
-
-    try {
-      schemaValidator(schema, data);
-    } catch(e) {
-      throw new SchemaError(e.message, data);
-    }
-
-    // a little manual validation
-    if( item.anonymous && !item.user_id ) {
-      throw new SchemaError('')
-    }
+  _request(uri, options) {
+    return new Promise((resolve, reject) => {
+      request(uri, options, (error, response) => {
+        if( error ) reject(error);
+        else resolve(response);
+      });
+    });
   }
 
 }

@@ -23,13 +23,6 @@ CREATE TABLE applications (
     description text
 );
 
-CREATE TABLE schemas (
-    schema_id text not null,
-    app_id text references applications not null,
-    schema text not null,
-    PRIMARY KEY(schema_id, app_id)
-);
-
 CREATE TABLE items (
     app_item_id text primary key,
     item_id text not null,
@@ -51,6 +44,7 @@ CREATE TABLE crowd_inputs (
    app_id text references applications not null,
    collection_id text references collections not null,
    user_id text,
+   schema_id text, 
    item_id text REFERENCES items not null,
    anonymous boolean,
    data json not null,
@@ -61,6 +55,7 @@ create index on crowd_inputs(app_id);
 create index on crowd_inputs(collection_id);
 create index on crowd_inputs(item_id);
 create index on crowd_inputs(user_id);
+create index on crowd_inputs(schema_id);
 
 CREATE TABLE suggest (
    suggest_id uuid primary key default public.gen_random_uuid(),

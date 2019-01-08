@@ -34,9 +34,6 @@ GRANT DELETE on crowd_source.crowd_inputs to admin;
 GRANT INSERT on crowd_source.suggest to admin;
 GRANT UPDATE on crowd_source.suggest to admin;
 GRANT DELETE on crowd_source.suggest to admin;
-GRANT INSERT on crowd_source.schemas to admin;
-GRANT UPDATE on crowd_source.schemas to admin;
-GRANT DELETE on crowd_source.schemas to admin;
 
 -- editor
 GRANT INSERT on crowd_source.crowd_inputs to editor;

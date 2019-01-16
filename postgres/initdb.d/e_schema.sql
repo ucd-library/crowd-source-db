@@ -11,10 +11,9 @@ SET search_path = crowd_source,public,pg_catalog;
 alter database :DBNAME set search_path to crowd_source,public,pg_catalog;
 
 CREATE TABLE collections (
-    collection_id text primary key,
+    collection_id text primary key, -- URI
     name text,
-    description text,
-    host text
+    description text
 );
 
 CREATE TABLE applications (
@@ -24,48 +23,57 @@ CREATE TABLE applications (
 );
 
 CREATE TABLE items (
-    app_item_id text primary key,
-    item_id text not null,
+    item_id text primary key, -- URI
     app_id text references applications not null,
-    collection_id text references collections not null,
-    parent_id text references items,
-    editable boolean default true,
-    completed boolean default false,
-    index integer,
-    CONSTRAINT unq_app_item UNIQUE(item_id,app_id)
+    collection_id text references collections not null, -- URI
+    parent_item_id text references items, -- URI
+    root_item_id text references items, -- URI
+    CONSTRAINT unq_app_item UNIQUE(item_id, app_id)
 );
 create index on items(app_id);
 create index on items(collection_id);
-create index on items(parent_id);
+create index on items(parent_item_id);
+create index on items(root_item_id);
+
+CREATE TABLE app_item_metadata (
+    app_item_metadata_id uuid primary key default public.gen_random_uuid(),
+    app_id text references applications not null,
+    item_id text references items not null, -- URI
+    editable boolean default true,
+    completed boolean default false,
+    index integer,
+    extra json,
+    CONSTRAINT unq_app_item UNIQUE(item_id, app_id)
+);
+create index on items(app_id);
+create index on items(item_id);
 create index on items(index);
 
 CREATE TABLE crowd_inputs (
    crowd_input_id text primary key,
    app_id text references applications not null,
-   collection_id text references collections not null,
+   item_id text REFERENCES items not null, -- URI
    user_id text,
-   schema_id text, 
-   item_id text REFERENCES items not null,
+   schema_id text not null, 
    anonymous boolean,
    data json not null,
    created timestamp without time zone,
    updated timestamp without time zone
 );
 create index on crowd_inputs(app_id);
-create index on crowd_inputs(collection_id);
 create index on crowd_inputs(item_id);
 create index on crowd_inputs(user_id);
 create index on crowd_inputs(schema_id);
 
 CREATE TABLE suggest (
    suggest_id uuid primary key default public.gen_random_uuid(),
-   collection_id text REFERENCES collections not null,
+   collection_id text REFERENCES collections not null, -- URI
    app_id text references applications not null,
-   domain text not null,
+   name text not null,
    text text not null,
    tsv tsvector
 );
-create index on suggest(domain);
+create index on suggest(name);
 create unique index idx_suggest_unique on suggest(app_id, collection_id, domain, text);
 
 CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
@@ -80,6 +88,36 @@ CREATE TABLE users (
 CREATE FUNCTION crowd_inputs(items) RETURNS bigint AS $$
   SELECT count(*) from crowd_source.crowd_inputs where item_id=$1.item_id;
 $$ LANGUAGE SQL IMMUTABLE;
+
+
+CREATE FUNCTION find_root_item_id_trig() RETURNS trigger as $find_root_item_id_trig$
+    BEGIN
+        IF NEW.parent_item_id is not null THEN
+            NEW.root_item_Id := select find_root_item_id(NEW.parent_item_id);
+        END IF;
+        RETURN NEW;
+    END
+$gen_app_item_id$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION find_root_item_id (
+    parent_id text ) RETURNS text as $$
+DECLARE
+    iid text;
+    pid text;
+BEGIN
+    select item_id into iid, parent_item_id into pid from items where parent_item_id = parent_id;
+    
+    IF( pid IS NOT NULL ) THEN
+        return SELECT find_root_item_id(pid)
+    END IF;
+
+    RETURN iid;
+END;
+$$ LANGUAGE plpgsql 
+
+
+CREATE TRIGGER find_root_item_id_trig BEFORE INSERT OR UPDATE ON items
+    FOR EACH ROW EXECUTE PROCEDURE find_root_item_id_trig();
 
 
 -- CREATE OR REPLACE VIEW item_count AS 
@@ -114,35 +152,10 @@ create type strto_tsquery_t as (
     plain text 
 );
 
+-- TODO: have to proxy handle this
 create function strto_tsquery(str text) returns strto_tsquery_t as $$
   select (
    replace((phraseto_tsquery($1))::text,'''',''),
    replace((plainto_tsquery($1))::text,'''','')
    )::strto_tsquery_t;
 $$ LANGUAGE SQL IMMUTABLE;
-
--- create type item_count as (
---   total bigint,
---   finished bigint,
---   not_finished bigint
--- );
-
-
--- CREATE FUNCTION child_items(catalogs) RETURNS bigint AS $$
---   SELECT count(*) from catalogs.pages p
---   where catalog_id=$1.catalog_id
--- $$ LANGUAGE SQL IMMUTABLE;
-
--- CREATE FUNCTION pages_finished(catalogs) RETURNS bigint AS $$
---   SELECT count(*) from catalogs.pages p
---   where
---   catalog_id=$1.catalog_id and
---   (p.editable is false or p.completed is true)
--- $$ LANGUAGE SQL IMMUTABLE;
-
--- CREATE FUNCTION pages_not_finished(catalogs) RETURNS bigint AS $$
---    SELECT count(*)
---    from pages p
---    where catalog_id=$1.catalog_id and
---    (p.editable is true and p.completed is false);
--- $$ LANGUAGE SQL IMMUTABLE;
